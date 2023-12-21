@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensw-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensw-front-pod
+  template:
+    metadata:
+      labels:
+        app: opensw-front-pod
+    spec:
+      containers:
+      - name: opensw-front-container
+        image: kimtaewan0317/front:test
+        ports:
+        - containerPort: 3000
+      nodeSelector:
+        kubernetes.io/hostname: kimtaewan
