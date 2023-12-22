@@ -6,16 +6,132 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: opensw-front-pod
+      app: opensw-front
   template:
     metadata:
       labels:
-        app: opensw-front-pod
+        app: opensw-front
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker1
       containers:
       - name: opensw-front-container
-        image: kimtaewan0317/front:test
+        image: kimtaewan0317/front:v3
         ports:
         - containerPort: 3000
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
       nodeSelector:
-        kubernetes.io/hostname: kimtaewan
+        kubernetes.io/hostname: worker1
+      containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: secret
+        - name: MYSQL_DATABASE
+          value: redmine
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker1
+      containers:
+      - name: jenkins-container
+        image: jenkins/jenkins:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redmine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redmine
+  template:
+    metadata:
+      labels:
+        app: redmine
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker2
+      containers:
+      - name: redmine-container
+        image: redmine
+        env:
+        - name: REDMINE_DB_ADAPTER
+          value: mysql2
+        - name: REDMINE_DB_DATABASE
+          value: redmine
+        - name: REDMINE_DB_HOST
+          value: mysql
+        - name: REDMINE_DB_PORT
+          value: "3306"
+        - name: REDMINE_DB_USERNAME
+          value: root
+        - name: REDMINE_DB_PASSWORD
+          value: secret
+        ports:
+        - containerPort: 3000
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensw-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensw-backend
+  template:
+    metadata:
+      labels:
+        app: opensw-backend
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker2
+      containers:
+      - name: opensw-backend-container
+        image: kimtaewan0317/server:test
+        env:
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_USER
+          value: root
+        - name: MYSQL_PASSWORD
+          value: secret
+        - name: MYSQL_DATABASE
+          value: mysql
+        ports:
+        - containerPort: 8082
+      restartPolicy: Always
